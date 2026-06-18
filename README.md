@@ -25,7 +25,7 @@ the same agent **without codemode** on a shared evalset.
 
 2. Run the GitHub Action.
   - Open [Actions](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions) in your repository.
-  - Select workflow `.github/workflows/datalayer-evals.yml`.
+  - Select workflow `.github/workflows/datalayer-evals.yml` ([direct link](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/datalayer-evals.yml)).
   - Click **Run workflow** and keep defaults, or override:
     - `evalset_spec_file` (default: `simple-example/simple-example.evalset.json`)
     - `agentspec_ids`
@@ -214,7 +214,7 @@ Trigger the **datalayer-evals** workflow from the Actions tab
 | :-- | :-- | :-- |
 | `evalset_spec_file` | `simple-example/simple-example.evalset.json` | Shared baseline evalset. |
 | `agentspec_ids` | `example-evals,example-evals-nocodemode` | Comma-separated variants to compare. |
-| `run_environments` | `sdk` | Lanes to execute (matrix). Use `sdk,sdk-proxy` to run both lanes (no spaces). |
+| `run_environments` | `sdk` | Lanes to execute (matrix). Use `sdk,sdk-proxy` to run both lanes. |
 | `run_limit` | `3` | Runs fetched per experiment. |
 | `ai_agents_url` | _(empty)_ | Optional API URL override. |
 

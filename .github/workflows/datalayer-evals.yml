@@ -14,7 +14,7 @@ on:
         default: example-evals,example-evals-nocodemode
         type: string
       run_environments:
-        description: Comma-separated run environments to execute (sdk,sdk-proxy; no spaces).
+        description: Comma-separated run environments to execute (sdk,sdk-proxy).
         required: false
         default: sdk
         type: string
@@ -30,12 +30,44 @@ on:
         type: string
 
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build_matrix.outputs.matrix }}
+    steps:
+      - name: Build run-environment matrix
+        id: build_matrix
+        shell: bash
+        env:
+          RUN_ENVIRONMENTS: ${{ inputs.run_environments }}
+        run: |
+          python - << 'PY'
+          import json
+          import os
+
+          raw = os.environ.get('RUN_ENVIRONMENTS', 'sdk')
+          lanes = [lane.strip() for lane in raw.split(',') if lane.strip()]
+          if not lanes:
+              lanes = ['sdk']
+
+          # Keep user order and drop duplicates.
+          deduped = list(dict.fromkeys(lanes))
+          matrix = {'run_environment': deduped}
+
+          output_path = os.environ.get('GITHUB_OUTPUT', '')
+          if output_path:
+              with open(output_path, 'a', encoding='utf-8') as stream:
+                  stream.write(f"matrix={json.dumps(matrix)}\n")
+
+          print(f"Resolved matrix: {matrix}")
+          PY
+
   evals:
+    needs: prepare-matrix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        run_environment: ${{ fromJSON(format('["{0}"]', join('","', split(inputs.run_environments, ',')))) }}
+      matrix: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout
