@@ -1,13 +1,13 @@
 {
-  "name": "context-engineering-codemode",
-  "description": "MCP tools + skills with codemode enabled.",
+  "name": "context-engineering-multi-agentspec",
+  "description": "MCP tools + skills baseline for multi-agentspec eval comparison.",
   "run_environment": "sdk",
   "kind": "batch",
-  "tags": ["context-engineering", "codemode", "github-actions"],
+  "tags": ["context-engineering", "multi-agentspec", "github-actions"],
   "metadata": {
     "scenario": "agentic-data-analysis",
-    "codemode_enabled": true,
-    "comparison_group": "secondary"
+    "agentspec_ids": ["example-evals", "example-evals-nocodemode"],
+    "comparison_mode": "same-evalset-multiple-agentspecs"
   },
   "schema": {
     "schema_version": "1.0",

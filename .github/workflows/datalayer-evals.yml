@@ -3,15 +3,20 @@ name: datalayer-evals
 on:
   workflow_dispatch:
     inputs:
-      no_codemode_spec_file:
-        description: Path to evalset spec file for no-codemode setup.
+      evalset_spec_file:
+        description: Path to evalset spec file used as the shared baseline.
         required: false
-        default: codemode-simple-1/no-codemode.evalset.json
+        default: simple-example/simple-example.evalset.json
         type: string
-      codemode_spec_file:
-        description: Path to evalset spec file for codemode-enabled setup.
+      agentspec_ids:
+        description: Comma-separated agentspec ids to bootstrap (multi-agentspec mode).
         required: false
-        default: codemode-simple-1/codemode.evalset.json
+        default: example-evals,example-evals-nocodemode
+        type: string
+      run_environments:
+        description: Comma-separated run environments to execute (sdk,sdk-proxy).
+        required: false
+        default: sdk,sdk-proxy
         type: string
       run_limit:
         description: Runs fetched per experiment.
@@ -23,8 +28,8 @@ on:
         required: false
         default: ""
         type: string
-      account_uid:
-        description: Optional account/org UID context.
+      billable_account_uid:
+        description: Optional billable account UID context.
         required: false
         default: ""
         type: string
@@ -32,6 +37,10 @@ on:
 jobs:
   evals:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        run_environment: ${{ fromJSON(format('["{0}"]', join('","', split(replace(inputs.run_environments, ' ', ''), ',')))) }}
 
     steps:
       - name: Checkout
@@ -42,176 +51,72 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Datalayer CLI
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install datalayer-core
-
-      - name: Create evalsets from specs
-        id: create_evalsets
+      - name: Prepare lane-specific evalset spec
+        id: prepare_spec
         shell: bash
         env:
-          SPEC_A: ${{ inputs.no_codemode_spec_file }}
-          SPEC_B: ${{ inputs.codemode_spec_file }}
-          TOKEN: ${{ secrets.DATALAYER_API_KEY }}
-          AI_AGENTS_URL: ${{ inputs.ai_agents_url }}
-          ACCOUNT_UID: ${{ inputs.account_uid }}
+          INPUT_SPEC: ${{ inputs.evalset_spec_file }}
+          RUN_ENVIRONMENT: ${{ matrix.run_environment }}
         run: |
           python - << 'PY'
           import json
           import os
-          import shlex
-          import subprocess
-          import sys
+          from pathlib import Path
 
-          def create_evalset(spec_path: str) -> str:
-              cmd = [
-                  'datalayer',
-                  'evals',
-                  'evalsets',
-                  'create',
-                  '--spec-file',
-                  spec_path,
-                  '--raw',
-                  '--token',
-                  os.environ['TOKEN'],
-              ]
-              ai_agents_url = (os.environ.get('AI_AGENTS_URL') or '').strip()
-              account_uid = (os.environ.get('ACCOUNT_UID') or '').strip()
-              if ai_agents_url:
-                  cmd.extend(['--ai-agents-url', ai_agents_url])
-              if account_uid:
-                  cmd.extend(['--account-uid', account_uid])
+          source = Path(os.environ['INPUT_SPEC'])
+          run_environment = os.environ['RUN_ENVIRONMENT'].strip()
+          payload = json.loads(source.read_text(encoding='utf-8'))
+          payload['run_environment'] = run_environment
 
-              print('Running:', ' '.join(shlex.quote(p) for p in cmd))
-              proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-              print(proc.stdout or '', end='')
-              if proc.returncode != 0:
-                  raise RuntimeError(f'Failed creating evalset from {spec_path}')
-
-              last_line = ''
-              for line in reversed((proc.stdout or '').splitlines()):
-                  if line.strip():
-                      last_line = line.strip()
-                      break
-              payload = json.loads(last_line)
-              evalset_id = str(((payload.get('evalset') or {}).get('id') or '')).strip()
-              if not evalset_id:
-                  raise RuntimeError(f'No evalset.id returned for spec {spec_path}')
-              return evalset_id
-
-          evalset_a = create_evalset(os.environ['SPEC_A'])
-          evalset_b = create_evalset(os.environ['SPEC_B'])
+          out_dir = Path('artifacts/specs')
+          out_dir.mkdir(parents=True, exist_ok=True)
+          base = source.name.removesuffix('.evalset.json').removesuffix('.json')
+          out_path = out_dir / f'{base}-{run_environment}.evalset.json'
+          out_path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
 
           output_path = os.environ.get('GITHUB_OUTPUT', '')
           if output_path:
               with open(output_path, 'a', encoding='utf-8') as stream:
-                  stream.write(f'evalset_a={evalset_a}\n')
-                  stream.write(f'evalset_b={evalset_b}\n')
-
-          print('Primary evalset:', evalset_a)
-          print('Secondary evalset:', evalset_b)
+                  stream.write(f'spec_path={out_path}\n')
+          print(f'Prepared spec: {out_path}')
           PY
 
-      - name: No codemode evals
-        id: no_codemode
+      - name: Run multi-agentspec eval report
+        id: evals
         uses: datalayer/github-actions@main
         with:
-          evalset-id: ${{ steps.create_evalsets.outputs.evalset_a }}
-          token: ${{ secrets.DATALAYER_API_KEY }}
+          evalset-spec-file: ${{ steps.prepare_spec.outputs.spec_path }}
+          api-key: ${{ secrets.DATALAYER_API_KEY }}
+          agentspec-ids: ${{ inputs.agentspec_ids }}
           run-limit: ${{ inputs.run_limit }}
           ai-agents-url: ${{ inputs.ai_agents_url }}
-          account-uid: ${{ inputs.account_uid }}
-          output-markdown: artifacts/no-codemode-report.md
+          billable-account-uid: ${{ inputs.billable_account_uid || secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
+          output-markdown: artifacts/simple-example-${{ matrix.run_environment }}-report.md
+          report-artifact-name: datalayer-evals-reports-${{ matrix.run_environment }}
           export-csv: "true"
 
-      - name: Codemode evals
-        id: codemode
-        uses: datalayer/github-actions@main
-        with:
-          evalset-id: ${{ steps.create_evalsets.outputs.evalset_b }}
-          token: ${{ secrets.DATALAYER_API_KEY }}
-          run-limit: ${{ inputs.run_limit }}
-          ai-agents-url: ${{ inputs.ai_agents_url }}
-          account-uid: ${{ inputs.account_uid }}
-          output-markdown: artifacts/codemode-report.md
-          export-csv: "true"
-
-      - name: Compare no-codemode vs codemode
-        shell: bash
-        run: |
-          python - << 'PY'
-          import csv
-          from pathlib import Path
-
-          no_csv = Path('artifacts/no-codemode-report.csv')
-          code_csv = Path('artifacts/codemode-report.csv')
-          summary_path = Path('artifacts/comparison-summary.md')
-
-          def load_latest(values_path: Path):
-              if not values_path.exists():
-                  return []
-              rows = list(csv.DictReader(values_path.open('r', encoding='utf-8')))
-              return [r for r in rows if r.get('row_type') == 'experiment']
-
-          no_rows = load_latest(no_csv)
-          code_rows = load_latest(code_csv)
-
-          def avg_latest(rows):
-              vals = []
-              for row in rows:
-                  raw = row.get('latest_pass_rate', '')
-                  try:
-                      vals.append(float(raw))
-                  except Exception:
-                      pass
-              return sum(vals) / len(vals) if vals else None
-
-          no_avg = avg_latest(no_rows)
-          code_avg = avg_latest(code_rows)
-
-          lines = []
-          lines.append('# Codemode Comparison Summary')
-          lines.append('')
-          lines.append(f'- No codemode experiments: {len(no_rows)}')
-          lines.append(f'- Codemode experiments: {len(code_rows)}')
-          lines.append('')
-          lines.append('| Group | Avg latest pass rate |')
-          lines.append('|---|---:|')
-          lines.append(f"| No codemode | {f'{no_avg*100:.1f}%' if no_avg is not None else 'n/a'} |")
-          lines.append(f"| Codemode | {f'{code_avg*100:.1f}%' if code_avg is not None else 'n/a'} |")
-          if no_avg is not None and code_avg is not None:
-              delta = code_avg - no_avg
-              lines.append(f"| Delta (Codemode - No codemode) | {delta*100:+.1f} pts |")
-          lines.append('')
-          lines.append('Notes:')
-          lines.append('- Use the same tools and skills in both evalsets.')
-          lines.append('- Only codemode should differ between the two groups.')
-
-          summary_path.parent.mkdir(parents=True, exist_ok=True)
-          summary_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-          print(summary_path.read_text(encoding='utf-8'))
-          PY
-
-      - name: Upload eval artifacts
+      - name: Upload final markdown/csv artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: datalayer-evals-artifacts
+          name: datalayer-evals-final-reports-${{ matrix.run_environment }}
           path: |
-            artifacts/no-codemode-report.md
-            artifacts/no-codemode-report.csv
-            artifacts/no-codemode-report.md.log
-            ${{ steps.no_codemode.outputs['timestamped-report-file'] }}
-            ${{ steps.no_codemode.outputs['timestamped-csv-file'] }}
-            artifacts/codemode-report.md
-            artifacts/codemode-report.csv
-            artifacts/codemode-report.md.log
-            ${{ steps.codemode.outputs['timestamped-report-file'] }}
-            ${{ steps.codemode.outputs['timestamped-csv-file'] }}
-            artifacts/comparison-summary.md
+            ${{ steps.evals.outputs.report-file }}
+            ${{ steps.evals.outputs.csv-file }}
+            ${{ steps.evals.outputs.log-file }}
+            ${{ steps.evals.outputs.timestamped-report-file }}
+            ${{ steps.evals.outputs.timestamped-csv-file }}
+            ${{ steps.prepare_spec.outputs.spec_path }}
 
       - name: Add summary to workflow
         shell: bash
         run: |
-          cat artifacts/comparison-summary.md >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Multi-Agentspec Evals Report"
+            echo ""
+            echo "- Lane: \\`${{ matrix.run_environment }}\\`"
+            echo "- Evalset spec: \\`${{ steps.prepare_spec.outputs.spec_path }}\\`"
+            echo "- Agentspec ids: \\`${{ inputs.agentspec_ids }}\\`"
+            echo "- Markdown report: \\`${{ steps.evals.outputs.report-file }}\\`"
+            echo "- CSV report: \\`${{ steps.evals.outputs.csv-file }}\\`"
+            echo "- Uploaded artifacts: \\`datalayer-evals-reports-${{ matrix.run_environment }}\\` and \\`datalayer-evals-final-reports-${{ matrix.run_environment }}\\`"
+          } >> "$GITHUB_STEP_SUMMARY"
