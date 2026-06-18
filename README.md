@@ -26,7 +26,8 @@ the same agent **without codemode** on a shared evalset.
   - Click **Run workflow** and keep defaults, or override:
     - `evalset_spec_file` (default: `simple-example/simple-example.evalset.json`)
     - `agentspec_ids`
-    - `billable_account_uid` (optional; falls back to secret when empty).
+    - `run_environments` (default: `sdk`; set `sdk,sdk-proxy` to run both lanes)
+    - `run_limit` (default: `3`)
 
 3. Get the report and view the evalset in Datalayer SaaS.
   - In the workflow run, download artifacts:
@@ -174,8 +175,9 @@ Each spec declares the comparison metadata:
 ## Automated Evals in GitHub Actions
 
 The workflow at [`.github/workflows/datalayer-evals.yml`](.github/workflows/datalayer-evals.yml)
-runs the shared evalset baseline across both agentspec variants, in both lanes
-(`sdk` and `sdk-proxy`), and uploads markdown + CSV reports as artifacts.
+runs the shared evalset baseline across both agentspec variants, with a
+configurable run-environment matrix (default lane: `sdk`; optional additional
+lane: `sdk-proxy`), and uploads markdown + CSV reports as artifacts.
 
 ### Required and optional secrets
 
@@ -205,10 +207,9 @@ Trigger the **datalayer-evals** workflow from the Actions tab
 | :-- | :-- | :-- |
 | `evalset_spec_file` | `simple-example/simple-example.evalset.json` | Shared baseline evalset. |
 | `agentspec_ids` | `example-evals,example-evals-nocodemode` | Comma-separated variants to compare. |
-| `run_environments` | `sdk,sdk-proxy` | Lanes to execute (matrix). |
-| `run_limit` | `50` | Runs fetched per experiment. |
+| `run_environments` | `sdk` | Lanes to execute (matrix). Use `sdk,sdk-proxy` to run both lanes. |
+| `run_limit` | `3` | Runs fetched per experiment. |
 | `ai_agents_url` | _(empty)_ | Optional API URL override. |
-| `billable_account_uid` | _(empty)_ | Optional UID; falls back to the `DATALAYER_BILLABLE_ACCOUNT_UID` secret when left empty. |
 
 ### Outputs
 
@@ -241,15 +242,13 @@ ids used for the run.
 
 ### Billable account UID usage
 
-You can control billing context with either of these methods:
+Billing context is sourced from the repository/organization secret
+`DATALAYER_BILLABLE_ACCOUNT_UID`.
 
-- Set workflow input `billable_account_uid` when dispatching the workflow.
-- Leave it empty and set repository secret `DATALAYER_BILLABLE_ACCOUNT_UID`.
-
-The workflow uses fallback wiring:
+The workflow wiring is:
 
 ```yaml
-billable-account-uid: ${{ inputs.billable_account_uid || secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
+billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
 ```
 
 This value is forwarded to the Datalayer action and applied to eval operations

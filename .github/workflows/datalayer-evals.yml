@@ -16,20 +16,15 @@ on:
       run_environments:
         description: Comma-separated run environments to execute (sdk,sdk-proxy).
         required: false
-        default: sdk,sdk-proxy
+        default: sdk
         type: string
       run_limit:
         description: Runs fetched per experiment.
         required: false
-        default: "50"
+        default: "3"
         type: string
       ai_agents_url:
         description: Optional AI Agents base URL override.
-        required: false
-        default: ""
-        type: string
-      billable_account_uid:
-        description: Optional billable account UID context.
         required: false
         default: ""
         type: string
@@ -90,7 +85,7 @@ jobs:
           agentspec-ids: ${{ inputs.agentspec_ids }}
           run-limit: ${{ inputs.run_limit }}
           ai-agents-url: ${{ inputs.ai_agents_url }}
-          billable-account-uid: ${{ inputs.billable_account_uid || secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
+          billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
           output-markdown: artifacts/simple-example-${{ matrix.run_environment }}-report.md
           report-artifact-name: datalayer-evals-reports-${{ matrix.run_environment }}
           export-csv: "true"
