@@ -12,6 +12,31 @@ agentic data-analysis workflows. It pairs a written research framing with a
 runnable, evaluation-driven setup that compares an agent **with codemode** to
 the same agent **without codemode** on a shared evalset.
 
+## TLDR
+
+1. Create GitHub secrets and get values from Datalayer SaaS.
+  - Open your repository secrets page: [Settings > Secrets and variables > Actions](https://github.com/settings/secrets/actions) (or in your repo: `https://github.com/<owner>/<repo>/settings/secrets/actions`).
+  - Create required secret `DATALAYER_API_KEY`.
+  - Optionally create `DATALAYER_BILLABLE_ACCOUNT_UID`.
+  - Get both values from [Datalayer SaaS](https://datalayer.ai): sign in, go to your profile and create a API key, copy your API key, and (if needed) copy the billable account UID from your account/organization billing context.
+
+2. Run the GitHub Action.
+  - Open [Actions](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions) in your repository.
+  - Select workflow `.github/workflows/datalayer-evals.yml`.
+  - Click **Run workflow** and keep defaults, or override:
+    - `evalset_spec_file` (default: `simple-example/simple-example.evalset.json`)
+    - `agentspec_ids`
+    - `billable_account_uid` (optional; falls back to secret when empty).
+
+3. Get the report and view the evalset in Datalayer SaaS.
+  - In the workflow run, download artifacts:
+    - `datalayer-evals-reports-sdk` / `datalayer-evals-reports-sdk-proxy`
+    - `datalayer-evals-final-reports-sdk` / `datalayer-evals-final-reports-sdk-proxy`
+  - Open markdown/CSV report files from `artifacts/`.
+  - In Datalayer SaaS, open [Evals](https://datalayer.ai/evals) and use the evalset ID shown in the workflow summary/report to inspect experiments and runs.
+
+
+
 ---
 
 ## Research Framing
