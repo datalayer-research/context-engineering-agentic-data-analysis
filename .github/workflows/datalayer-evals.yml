@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        run_environment: [sdk, sdk-proxy]
+        run_environment: ${{ fromJSON(format('["{0}"]', join('","', split(replace(inputs.run_environments, ' ', ''), ',')))) }}
 
     steps:
       - name: Checkout
@@ -70,7 +70,8 @@ jobs:
 
           out_dir = Path('artifacts/specs')
           out_dir.mkdir(parents=True, exist_ok=True)
-          out_path = out_dir / f'simple-example-{run_environment}.evalset.json'
+          base = source.name.removesuffix('.evalset.json').removesuffix('.json')
+          out_path = out_dir / f'{base}-{run_environment}.evalset.json'
           out_path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
 
           output_path = os.environ.get('GITHUB_OUTPUT', '')
@@ -82,7 +83,7 @@ jobs:
 
       - name: Run multi-agentspec eval report
         id: evals
-        uses: datalayer/github-actions@enh/1
+        uses: datalayer/github-actions@main
         with:
           evalset-spec-file: ${{ steps.prepare_spec.outputs.spec_path }}
           api-key: ${{ secrets.DATALAYER_API_KEY }}
