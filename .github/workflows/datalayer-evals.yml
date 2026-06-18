@@ -14,7 +14,7 @@ on:
         default: example-evals,example-evals-nocodemode
         type: string
       run_environments:
-        description: Comma-separated run environments to execute (sdk,sdk-proxy).
+        description: Comma-separated run environments to execute (sdk,sdk-proxy; no spaces).
         required: false
         default: sdk
         type: string
@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        run_environment: ${{ fromJSON(format('["{0}"]', join('","', split(replace(inputs.run_environments, ' ', ''), ',')))) }}
+        run_environment: ${{ fromJSON(format('["{0}"]', join('","', split(inputs.run_environments, ',')))) }}
 
     steps:
       - name: Checkout

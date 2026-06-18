@@ -15,7 +15,10 @@ the same agent **without codemode** on a shared evalset.
 ## TLDR
 
 1. Create GitHub secrets and get values from Datalayer SaaS.
-  - Open your repository secrets page: [Settings > Secrets and variables > Actions](https://github.com/settings/secrets/actions) (or in your repo: `https://github.com/<owner>/<repo>/settings/secrets/actions`).
+  - Open your repository secrets page: [Settings > Secrets and variables > Actions](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/settings/secrets/actions).
+  - Use **Repository secrets** for this workflow.
+  - **Organization secrets** also work if they are shared with this repository.
+  - **Environment secrets** are not used by this workflow as currently written (no job `environment` is configured).
   - Create required secret `DATALAYER_API_KEY`.
   - Optionally create `DATALAYER_BILLABLE_ACCOUNT_UID`.
   - Get both values from [Datalayer SaaS](https://datalayer.ai): sign in, go to your profile and create a API key, copy your API key, and (if needed) copy the billable account UID from your account/organization billing context.
@@ -183,6 +186,10 @@ lane: `sdk-proxy`), and uploads markdown + CSV reports as artifacts.
 
 Configure these in **Settings → Secrets and variables → Actions**:
 
+- Primary scope: **Repository secrets**.
+- Also supported: **Organization secrets** (if configured to be available to this repository).
+- Not used in the current workflow: **Environment secrets** (unless you update the job to use an `environment`).
+
 | Secret | Required | Purpose |
 | :-- | :-- | :-- |
 | `DATALAYER_API_KEY` | ✅ Required | Authenticates the Datalayer action. Passed as `api-key`. |
@@ -207,7 +214,7 @@ Trigger the **datalayer-evals** workflow from the Actions tab
 | :-- | :-- | :-- |
 | `evalset_spec_file` | `simple-example/simple-example.evalset.json` | Shared baseline evalset. |
 | `agentspec_ids` | `example-evals,example-evals-nocodemode` | Comma-separated variants to compare. |
-| `run_environments` | `sdk` | Lanes to execute (matrix). Use `sdk,sdk-proxy` to run both lanes. |
+| `run_environments` | `sdk` | Lanes to execute (matrix). Use `sdk,sdk-proxy` to run both lanes (no spaces). |
 | `run_limit` | `3` | Runs fetched per experiment. |
 | `ai_agents_url` | _(empty)_ | Optional API URL override. |
 
