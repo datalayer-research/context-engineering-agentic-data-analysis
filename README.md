@@ -232,6 +232,25 @@ Typical files inside those artifacts:
 
 Download from the GitHub UI (workflow run → **Artifacts**) or via the CLI:
 
+If you do not have the GitHub CLI installed, install it first:
+
+```bash
+# macOS (Homebrew)
+brew install gh
+
+# Ubuntu/Debian
+sudo apt update && sudo apt install -y gh
+
+# Windows (winget)
+winget install --id GitHub.cli
+```
+
+Then authenticate once:
+
+```bash
+gh auth login
+```
+
 ```bash
 gh run download <run-id> --name datalayer-evals-final-reports-sdk --dir ./artifacts
 gh run download <run-id> --name datalayer-evals-final-reports-sdk-proxy --dir ./artifacts
