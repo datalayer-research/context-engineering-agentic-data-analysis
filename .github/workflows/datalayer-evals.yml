@@ -6,7 +6,7 @@ on:
       evalset_spec_file:
         description: Path to evalset spec file used as the shared baseline.
         required: false
-        default: simple-example/simple-example.evalset.json
+        default: evals/simple-example/simple-example.evalset.json
         type: string
       agentspec_ids:
         description: Comma-separated agentspec ids to bootstrap (multi-agentspec mode).
@@ -117,8 +117,9 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         with:
           evalset-spec-file: ${{ steps.prepare_spec.outputs.spec_path }}
-          api-key: ${{ secrets.DATALAYER_API_KEY }}
+          execute-runs: "true"
           agentspec-ids: ${{ inputs.agentspec_ids }}
+          api-key: ${{ secrets.DATALAYER_API_KEY }}
           run-environment: ${{ matrix.run_environment }}
           run-limit: ${{ inputs.run_limit }}
           ai-agents-url: ${{ inputs.ai_agents_url }}
@@ -147,6 +148,7 @@ jobs:
             echo ""
             echo "- Lane: \\`${{ matrix.run_environment }}\\`"
             echo "- Evalset spec: \\`${{ steps.prepare_spec.outputs.spec_path }}\\`"
+            echo "- Executed evalset id: \`${{ steps.evals.outputs.executed-evalset-id }}\`"
             echo "- Agentspec ids: \\`${{ inputs.agentspec_ids }}\\`"
             echo "- Markdown report: \\`${{ steps.evals.outputs.report-file }}\\`"
             echo "- CSV report: \\`${{ steps.evals.outputs.csv-file }}\\`"

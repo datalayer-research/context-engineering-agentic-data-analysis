@@ -20,7 +20,7 @@ Use these agentspec ids:
 
 The repository workflow `.github/workflows/datalayer-evals.yml` runs this scenario with:
 
-- `evalset-spec-file: simple-example/simple-example.evalset.json`
+- `evalset-spec-file: evals/simple-example/simple-example.evalset.json`
 - `agentspec-ids: example-evals,example-evals-nocodemode`
 
 It runs a run-environment matrix from the `run_environments` workflow input.

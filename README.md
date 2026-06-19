@@ -31,7 +31,7 @@ the same agent **without codemode** on a shared evalset.
   - Open [Actions](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions) in your repository.
   - Select workflow `.github/workflows/datalayer-evals.yml` ([direct link](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/datalayer-evals.yml)).
   - Click **Run workflow** and keep defaults, or override:
-    - `evalset_spec_file` (default: `simple-example/simple-example.evalset.json`)
+    - `evalset_spec_file` (default: `evals/simple-example/simple-example.evalset.json`)
     - `agentspec_ids`
     - `run_environments` (default: `sdk`; set `sdk,sdk-proxy` to run both lanes)
     - `run_limit` (default: `3`)
@@ -164,7 +164,7 @@ evalset** against **two agentspec variants** in the same run:
 
 Because both variants run against the identical evalset, the resulting report
 isolates the effect of codemode on the pass rate. The scenario configs live in
-[`simple-example/`](simple-example/):
+[`evals/simple-example/`](evals/simple-example/):
 
 - `simple-example.evalset.json` — canonical baseline evalset for the scenario.
 
@@ -225,7 +225,7 @@ env:
 
 1. Add the repository secret `DATALAYER_API_KEY` (and optionally
    `DATALAYER_BILLABLE_ACCOUNT_UID`).
-2. Review or customize the evalset spec under `simple-example/`.
+2. Review or customize the evalset spec under `evals/simple-example/`.
 3. Optionally override `agentspec_ids` when dispatching the workflow.
 
 ### Run
@@ -235,7 +235,7 @@ Trigger the **datalayer-evals** workflow from the Actions tab
 
 | Input | Default | Notes |
 | :-- | :-- | :-- |
-| `evalset_spec_file` | `simple-example/simple-example.evalset.json` | Shared baseline evalset. |
+| `evalset_spec_file` | `evals/simple-example/simple-example.evalset.json` | Shared baseline evalset. |
 | `agentspec_ids` | `example-evals,example-evals-nocodemode` | Comma-separated variants to compare. |
 | `run_environments` | `sdk` | Lanes to execute (matrix). Use `sdk,sdk-proxy` to run both lanes. |
 | `run_limit` | `3` | Runs fetched per experiment. |
@@ -307,46 +307,4 @@ and optional cloud runtime creation.
 
 ## How to Interpret the Report
 
-Each report compares the two agentspecs on the same cases. Read it in this order:
-
-1. **Header** — generated timestamp, number of experiments/agentspecs/cases, and
-   a deep link to open the evalset in Datalayer.
-2. **Agentspec Coverage** — confirms both `example-evals` and
-   `example-evals-nocodemode` were exercised, with run counts.
-3. **Experiment Overview** — per-variant **Latest** pass rate, **Baseline**, and
-   **Drift** (latest − baseline). This is the headline accuracy comparison.
-4. **Comparison Combinations** — rankings by latest pass rate, by drift, and by
-   stability, plus **pairwise deltas**. The codemode-vs-no-codemode delta is the
-   key research number: a positive delta means codemode improved the pass rate.
-5. **Per-Experiment Details** — run timelines, sparklines, and any failure causes.
-6. **Appendix: Run Details** — every fetched run with its prompt, agent output,
-   summary, and report (the same content the in-app run-details dialog shows).
-
-### Per-case scores
-
-The report's **Per-Case Outcomes** section breaks the aggregate pass rate down
-to the individual cases (`kpi-summary`, `sql-safety`, ...). For each case it
-shows the pass rate across runs and an **Avg Score** in the `[0, 1]` range, plus
-a per-case pass-rate-by-agentspec table comparing `example-evals` against
-`example-evals-nocodemode`. These are the agent's **real** evaluation scores for
-each case — read back from the runs stored on the platform, not synthesized — so
-a per-case row that regresses under one variant points at exactly which task
-codemode helped or hurt. Small score movement for the same case across runs
-without a pass/fail change is expected model non-determinism; focus on pass/fail
-flips and the cross-agentspec deltas.
-
-### Reading the deltas
-
-Deltas are rendered as percentage-point changes with an emoji indicator:
-
-- 🟢 positive (e.g. `🟢 +8.0 pts`) — the left/latest variant did better.
-- 🔴 negative (e.g. `🔴 -5.0 pts`) — the left/latest variant did worse.
-- ⚪ flat (`⚪ +0.0 pts`) — no measurable change.
-
-For the codemode comparison, look at the **pairwise latest-pass delta** between
-`example-evals` and `example-evals-nocodemode`: it quantifies the accuracy cost
-or benefit of codemode for this evalset, which you then weigh against the
-latency and token-cost gains described in the research framing above.
-
-The CSV export carries the same data in tabular form for downstream analysis
-(spreadsheets, notebooks, or further EDD regression tracking).
+See the dedicated docs page: https://datalayer.ai/docs/evals-reports
