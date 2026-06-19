@@ -2,15 +2,17 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# ☰ 🧪 Context Engineering for Agentic Data Analysis
-
-See the [Research section on Datalayer AI](https://datalayer.ai/research/context-optimized-agents).
+# ☰ ⚗️ 🧪 Context Engineering for Agentic Data Analysis
 
 This repository studies how **context engineering** — and in particular the
 **Codemode** execution strategy — changes the accuracy, latency, and cost of
 agentic data-analysis workflows. It pairs a written research framing with a
 runnable, evaluation-driven setup that compares an agent **with codemode** to
 the same agent **without codemode** on a shared evalset.
+
+> Read the [Research section on Datalayer AI](https://datalayer.ai/research/context-optimized-agents).
+
+> Canonical Evals documentation: [https://datalayer.ai/docs/evals](https://datalayer.ai/docs/evals)
 
 ## TLDR
 
@@ -195,8 +197,27 @@ Configure these in **Settings → Secrets and variables → Actions**:
 | `DATALAYER_API_KEY` | ✅ Required | Authenticates the Datalayer action. Passed as `api-key`. |
 | `DATALAYER_BILLABLE_ACCOUNT_UID` | Optional | Billable account context for cloud runtime creation and eval operations. Passed as `billable-account-uid`. |
 
+When your selected agentspecs target Amazon Bedrock models, define these
+additional GitHub secrets as well:
+
+| Secret | Required for Bedrock agentspecs | Purpose |
+| :-- | :-- | :-- |
+| `AWS_ACCESS_KEY_ID` | ✅ Yes | AWS access key used by the Bedrock client. |
+| `AWS_SECRET_ACCESS_KEY` | ✅ Yes | AWS secret key used by the Bedrock client. |
+| `AWS_DEFAULT_REGION` | ✅ Yes | Region hosting the Bedrock model endpoint. |
+
 > Never hard-code the API key or billable account UID in the workflow file or in
 > spec files — always reference them through `secrets.*`.
+
+For Bedrock-backed agentspecs, expose the AWS secrets as environment variables
+on the eval step (or at job level):
+
+```yaml
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+```
 
 ### Setup
 
@@ -298,6 +319,19 @@ Each report compares the two agentspecs on the same cases. Read it in this order
 5. **Per-Experiment Details** — run timelines, sparklines, and any failure causes.
 6. **Appendix: Run Details** — every fetched run with its prompt, agent output,
    summary, and report (the same content the in-app run-details dialog shows).
+
+### Per-case scores
+
+The report's **Per-Case Outcomes** section breaks the aggregate pass rate down
+to the individual cases (`kpi-summary`, `sql-safety`, ...). For each case it
+shows the pass rate across runs and an **Avg Score** in the `[0, 1]` range, plus
+a per-case pass-rate-by-agentspec table comparing `example-evals` against
+`example-evals-nocodemode`. These are the agent's **real** evaluation scores for
+each case — read back from the runs stored on the platform, not synthesized — so
+a per-case row that regresses under one variant points at exactly which task
+codemode helped or hurt. Small score movement for the same case across runs
+without a pass/fail change is expected model non-determinism; focus on pass/fail
+flips and the cross-agentspec deltas.
 
 ### Reading the deltas
 

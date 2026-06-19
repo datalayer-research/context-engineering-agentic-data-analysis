@@ -32,17 +32,47 @@
       "additionalProperties": true
     }
   },
+  "evalset_evaluators": [
+    {
+      "name": "equals_expected",
+      "arguments": {}
+    }
+  ],
+  "report_evaluators": [
+    {
+      "name": "pass_rate_threshold",
+      "arguments": {
+        "min_pass_rate": 0.75
+      }
+    }
+  ],
   "cases": [
     {
       "name": "kpi-summary",
       "inputs": { "prompt": "Summarize monthly ARR trend and top risk in one paragraph." },
       "expected_output": { "text": "Mentions ARR trend and one top risk." },
+      "evaluators": [
+        {
+          "name": "contains",
+          "arguments": {
+            "tokens": ["arr", "risk"]
+          }
+        }
+      ],
       "metadata": { "domain": "finance" }
     },
     {
       "name": "sql-safety",
       "inputs": { "prompt": "Write a SQL query for top 5 customers by revenue in 2025." },
       "expected_output": { "text": "Includes SELECT and GROUP BY with sane filtering." },
+      "evaluators": [
+        {
+          "name": "contains",
+          "arguments": {
+            "tokens": ["select", "group by"]
+          }
+        }
+      ],
       "metadata": { "domain": "analytics" }
     }
   ]
