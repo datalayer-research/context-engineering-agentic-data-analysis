@@ -3,6 +3,8 @@
 This scenario uses a single shared evalset baseline and compares two agentspec
 variants in the same run: the codemode agent against its no-codemode twin.
 
+Canonical Evals docs: [https://datalayer.ai/docs/evals](https://datalayer.ai/docs/evals)
+
 ## Multi-Agentspec Variants
 
 Use these agentspec ids:

@@ -111,6 +111,10 @@ jobs:
       - name: Run multi-agentspec eval report
         id: evals
         uses: datalayer/github-actions@main
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         with:
           evalset-spec-file: ${{ steps.prepare_spec.outputs.spec_path }}
           api-key: ${{ secrets.DATALAYER_API_KEY }}
