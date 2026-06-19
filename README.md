@@ -4,7 +4,7 @@
 
 [![Run Workflow](https://img.shields.io/badge/Run%20Workflow-datalayer--evals-blue?logo=githubactions&logoColor=white)](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/datalayer-evals.yml)
 
-# ☰ ⚗️ 🧪 Context Engineering for Agentic Data Analysis
+# ⚗️ 🧪 Context Engineering for Agentic Data Analysis
 
 This repository studies how **context engineering** — and in particular the
 **Codemode** execution strategy — changes the accuracy, latency, and cost of
