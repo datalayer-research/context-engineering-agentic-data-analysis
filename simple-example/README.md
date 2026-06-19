@@ -23,22 +23,25 @@ The repository workflow `.github/workflows/datalayer-evals.yml` runs this scenar
 - `evalset-spec-file: simple-example/simple-example.evalset.json`
 - `agentspec-ids: example-evals,example-evals-nocodemode`
 
-It runs both lanes with a matrix:
+It runs a run-environment matrix from the `run_environments` workflow input.
+Default is:
 
 - `sdk`
+
+Optional additional lane:
+
 - `sdk-proxy`
 
 ## Billable Account UID
 
-The workflow supports an optional billing context. Use either method:
+The workflow supports an optional billing context via repository secret:
 
-- Set workflow input `billable_account_uid` when manually dispatching.
-- Leave input empty and set repository secret `DATALAYER_BILLABLE_ACCOUNT_UID`.
+- `DATALAYER_BILLABLE_ACCOUNT_UID`
 
-The workflow passes billing context with this fallback:
+In `.github/workflows/datalayer-evals.yml`, billing context is passed directly from the secret:
 
 ```yaml
-billable-account-uid: ${{ inputs.billable_account_uid || secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
+billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
 ```
 
 This applies billing context to eval operations and optional runtime creation.
@@ -53,9 +56,9 @@ From the GitHub UI:
 2. Open the `Artifacts` section.
 3. Download lane artifacts:
 	- `datalayer-evals-reports-sdk`
-	- `datalayer-evals-reports-sdk-proxy`
 	- `datalayer-evals-final-reports-sdk`
-	- `datalayer-evals-final-reports-sdk-proxy`
+	- `datalayer-evals-reports-sdk-proxy` (when `run_environments` includes `sdk-proxy`)
+	- `datalayer-evals-final-reports-sdk-proxy` (when `run_environments` includes `sdk-proxy`)
 
 Included report files:
 
