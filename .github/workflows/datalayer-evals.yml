@@ -37,30 +37,18 @@ jobs:
     steps:
       - name: Build run-environment matrix
         id: build_matrix
-        shell: bash
-        env:
-          RUN_ENVIRONMENTS: ${{ inputs.run_environments }}
-        run: |
-          python - << 'PY'
-          import json
-          import os
-
-          raw = os.environ.get('RUN_ENVIRONMENTS', 'sdk')
-          lanes = [lane.strip() for lane in raw.split(',') if lane.strip()]
-          if not lanes:
-              lanes = ['sdk']
-
-          # Keep user order and drop duplicates.
-          deduped = list(dict.fromkeys(lanes))
-          matrix = {'run_environment': deduped}
-
-          output_path = os.environ.get('GITHUB_OUTPUT', '')
-          if output_path:
-              with open(output_path, 'a', encoding='utf-8') as stream:
-                  stream.write(f"matrix={json.dumps(matrix)}\n")
-
-          print(f"Resolved matrix: {matrix}")
-          PY
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const raw = `${{ inputs.run_environments }}` || 'sdk';
+            const lanes = raw
+              .split(',')
+              .map((lane) => lane.trim())
+              .filter(Boolean);
+            const deduped = [...new Set(lanes.length ? lanes : ['sdk'])];
+            const matrix = { run_environment: deduped };
+            core.setOutput('matrix', JSON.stringify(matrix));
+            console.log(`Resolved matrix: ${JSON.stringify(matrix)}`);
 
   evals:
     needs: prepare-matrix
@@ -73,52 +61,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Prepare lane-specific evalset spec
         id: prepare_spec
-        shell: bash
-        env:
-          INPUT_SPEC: ${{ inputs.evalset_spec_file }}
-          RUN_ENVIRONMENT: ${{ matrix.run_environment }}
-        run: |
-          python - << 'PY'
-          import json
-          import os
-          from pathlib import Path
+        uses: datalayer/github-actions@main
+        with:
+          mode: prepare-spec
+          evalset-spec-file: ${{ inputs.evalset_spec_file }}
+          run-environment: ${{ matrix.run_environment }}
+          prepared-spec-output-dir: artifacts/specs
 
-          source = Path(os.environ['INPUT_SPEC'])
-          run_environment = os.environ['RUN_ENVIRONMENT'].strip()
-          payload = json.loads(source.read_text(encoding='utf-8'))
-          payload['run_environment'] = run_environment
-
-          out_dir = Path('artifacts/specs')
-          out_dir.mkdir(parents=True, exist_ok=True)
-          base = source.name.removesuffix('.evalset.json').removesuffix('.json')
-          out_path = out_dir / f'{base}-{run_environment}.evalset.json'
-          out_path.write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
-
-          output_path = os.environ.get('GITHUB_OUTPUT', '')
-          if output_path:
-              with open(output_path, 'a', encoding='utf-8') as stream:
-                  stream.write(f'spec_path={out_path}\n')
-          print(f'Prepared spec: {out_path}')
-          PY
-
-      - name: Run multi-agentspec eval report
-        id: evals
+      - name: Execute multi-agentspec eval runs
+        id: execute_runs
         uses: datalayer/github-actions@main
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         with:
-          evalset-spec-file: ${{ steps.prepare_spec.outputs.spec_path }}
-          execute-runs: "true"
+          mode: execute-runs
+          evalset-spec-file: ${{ steps.prepare_spec.outputs.prepared-spec-path }}
           agentspec-ids: ${{ inputs.agentspec_ids }}
+          api-key: ${{ secrets.DATALAYER_API_KEY }}
+          run-environment: ${{ matrix.run_environment }}
+          run-limit: ${{ inputs.run_limit }}
+          ai-agents-url: ${{ inputs.ai_agents_url }}
+          billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
+
+      - name: Generate eval report
+        id: evals
+        uses: datalayer/github-actions@main
+        with:
+          mode: run-report
+          evalset-id: ${{ steps.execute_runs.outputs.executed-evalset-id }}
           api-key: ${{ secrets.DATALAYER_API_KEY }}
           run-environment: ${{ matrix.run_environment }}
           run-limit: ${{ inputs.run_limit }}
@@ -126,6 +100,7 @@ jobs:
           billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
           output-markdown: artifacts/simple-example-${{ matrix.run_environment }}-report.md
           report-artifact-name: datalayer-evals-reports-${{ matrix.run_environment }}
+          upload-report-artifacts: "false"
           export-csv: "true"
 
       - name: Upload final markdown/csv artifacts
@@ -138,7 +113,7 @@ jobs:
             ${{ steps.evals.outputs.log-file }}
             ${{ steps.evals.outputs.timestamped-report-file }}
             ${{ steps.evals.outputs.timestamped-csv-file }}
-            ${{ steps.prepare_spec.outputs.spec_path }}
+            ${{ steps.prepare_spec.outputs.prepared-spec-path }}
 
       - name: Add summary to workflow
         shell: bash
@@ -147,8 +122,8 @@ jobs:
             echo "## Multi-Agentspec Evals Report"
             echo ""
             echo "- Lane: \`${{ matrix.run_environment }}\`"
-            echo "- Evalset spec: \`${{ steps.prepare_spec.outputs.spec_path }}\`"
-            echo "- Executed evalset id: \`${{ steps.evals.outputs.executed-evalset-id }}\`"
+            echo "- Evalset spec: \`${{ steps.prepare_spec.outputs.prepared-spec-path }}\`"
+            echo "- Executed evalset id: \`${{ steps.execute_runs.outputs.executed-evalset-id }}\`"
             echo "- Agentspec ids: \`${{ inputs.agentspec_ids }}\`"
             echo "- Markdown report: \`${{ steps.evals.outputs.report-file }}\`"
             echo "- CSV report: \`${{ steps.evals.outputs.csv-file }}\`"
