@@ -23,6 +23,11 @@ on:
         required: false
         default: "3"
         type: string
+      max_runtime_seconds:
+        description: Max wall-clock seconds for eval execution before runtimes are torn down (0 disables).
+        required: false
+        default: 180
+        type: number
       ai_agents_url:
         description: Optional AI Agents base URL override.
         required: false
@@ -84,6 +89,7 @@ jobs:
           api-key: ${{ secrets.DATALAYER_API_KEY }}
           run-environment: ${{ matrix.run_environment }}
           run-limit: ${{ inputs.run_limit }}
+          max-runtime-seconds: ${{ inputs.max_runtime_seconds }}
           ai-agents-url: ${{ inputs.ai_agents_url }}
           billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
 
