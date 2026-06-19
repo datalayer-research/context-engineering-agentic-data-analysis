@@ -23,8 +23,8 @@ on:
         required: false
         default: "3"
         type: string
-      max_runtime_seconds:
-        description: Max wall-clock seconds for eval execution before runtimes are torn down (0 disables).
+      request_timeout_seconds:
+        description: Per-agent-call timeout in seconds during execute-runs (hung calls are aborted and runtimes torn down).
         required: false
         default: 180
         type: number
@@ -89,7 +89,7 @@ jobs:
           api-key: ${{ secrets.DATALAYER_API_KEY }}
           run-environment: ${{ matrix.run_environment }}
           run-limit: ${{ inputs.run_limit }}
-          max-runtime-seconds: ${{ inputs.max_runtime_seconds }}
+          request-timeout-seconds: ${{ inputs.request_timeout_seconds }}
           ai-agents-url: ${{ inputs.ai_agents_url }}
           billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
 
