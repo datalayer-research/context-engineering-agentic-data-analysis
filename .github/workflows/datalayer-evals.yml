@@ -119,6 +119,7 @@ jobs:
           evalset-spec-file: ${{ steps.prepare_spec.outputs.spec_path }}
           api-key: ${{ secrets.DATALAYER_API_KEY }}
           agentspec-ids: ${{ inputs.agentspec_ids }}
+          run-environment: ${{ matrix.run_environment }}
           run-limit: ${{ inputs.run_limit }}
           ai-agents-url: ${{ inputs.ai_agents_url }}
           billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}
