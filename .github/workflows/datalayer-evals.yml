@@ -110,6 +110,7 @@ jobs:
           export-csv: "true"
 
       - name: Upload final markdown/csv artifacts
+        id: upload
         uses: actions/upload-artifact@v4
         with:
           name: datalayer-evals-final-reports-${{ matrix.run_environment }}
@@ -134,4 +135,5 @@ jobs:
             echo "- Markdown report: \`${{ steps.evals.outputs.report-file }}\`"
             echo "- CSV report: \`${{ steps.evals.outputs.csv-file }}\`"
             echo "- Uploaded artifacts: \`datalayer-evals-reports-${{ matrix.run_environment }}\` and \`datalayer-evals-final-reports-${{ matrix.run_environment }}\`"
+            echo "- [Download reports (datalayer-evals-final-reports-${{ matrix.run_environment }})](${{ steps.upload.outputs.artifact-url }})"
           } >> "$GITHUB_STEP_SUMMARY"
