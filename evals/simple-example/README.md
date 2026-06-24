@@ -18,7 +18,7 @@ Use these agentspec ids:
 
 ## How To Run In GitHub Actions
 
-The repository workflow `.github/workflows/datalayer-evals.yml` runs this scenario with:
+The repository workflow `.github/workflows/simple-example.yaml` runs this scenario with:
 
 - `evalset-spec-file: evals/simple-example/simple-example.evalset.json`
 - `agentspec-ids: example-evals,example-evals-nocodemode`
@@ -38,7 +38,7 @@ The workflow supports an optional billing context via repository secret:
 
 - `DATALAYER_BILLABLE_ACCOUNT_UID`
 
-In `.github/workflows/datalayer-evals.yml`, billing context is passed directly from the secret:
+In `.github/workflows/simple-example.yaml`, billing context is passed directly from the secret:
 
 ```yaml
 billable-account-uid: ${{ secrets.DATALAYER_BILLABLE_ACCOUNT_UID }}

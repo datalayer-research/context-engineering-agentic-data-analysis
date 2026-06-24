@@ -2,7 +2,7 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-[![Run Workflow](https://img.shields.io/badge/Run%20Workflow-datalayer--evals-blue?logo=githubactions&logoColor=white)](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/datalayer-evals.yml)
+[![Run Workflow](https://img.shields.io/badge/Run%20Workflow-simple--example-blue?logo=githubactions&logoColor=white)](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/simple-example.yaml)
 
 # ⚗️ 🧪 Context Engineering for Agentic Data Analysis
 
@@ -29,7 +29,7 @@ the same agent **without codemode** on a shared evalset.
 
 2. Run the GitHub Action.
   - Open [Actions](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions) in your repository.
-  - Select workflow `.github/workflows/datalayer-evals.yml` ([direct link](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/datalayer-evals.yml)).
+  - Select workflow `.github/workflows/simple-example.yaml` ([direct link](https://github.com/datalayer-research/context-engineering-agentic-data-analysis/actions/workflows/simple-example.yaml)).
   - Click **Run workflow** and keep defaults, or override:
     - `evalset_spec_file` (default: `evals/simple-example/simple-example.evalset.json`)
     - `agentspec_ids`
@@ -181,7 +181,7 @@ Each spec declares the comparison metadata:
 
 ## Automated Evals in GitHub Actions
 
-The workflow at [`.github/workflows/datalayer-evals.yml`](.github/workflows/datalayer-evals.yml)
+The workflow at [`.github/workflows/simple-example.yaml`](.github/workflows/simple-example.yaml)
 runs the shared evalset baseline across both agentspec variants, with a
 configurable run-environment matrix (default lane: `sdk`; optional additional
 lane: `sdk-proxy`), and uploads markdown + CSV reports as artifacts.

@@ -6,4 +6,4 @@
 
 Scenario folders now live under `evals/`.
 
-- [`simple-example/`](simple-example/): shared evalset baseline used by `.github/workflows/datalayer-evals.yml`.
+- [`simple-example/`](simple-example/): shared evalset baseline used by `.github/workflows/simple-example.yaml`.
